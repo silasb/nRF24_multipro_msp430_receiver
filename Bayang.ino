@@ -223,15 +223,16 @@ void Bayang_recv_packet()
 
         //  packet[3] | 0x00
 
-        // byte *sumd = buildSumD(roll, pitch, yaw, throttle,
-        // packet[2] & BAYANG_FLAG_FLIP == BAYANG_FLAG_FLIP,
-        // packet[2] & BAYANG_FLAG_HEADLESS == BAYANG_FLAG_HEADLESS,
-        // packet[2] & BAYANG_FLAG_RTH == BAYANG_FLAG_RTH,
-        // packet[2] & BAYANG_FLAG_SNAPSHOT == BAYANG_FLAG_SNAPSHOT,
-        // packet[2] & BAYANG_FLAG_VIDEO == BAYANG_FLAG_VIDEO,
-        // packet[3] & BAYANG_FLAG_INVERT == BAYANG_FLAG_INVERT
-        // );
-        // Serial.write(sumd, 37);
+        uint8_t *sumd = BuildSumD(roll, pitch, yaw, throttle,
+            packet[2] & BAYANG_FLAG_FLIP == BAYANG_FLAG_FLIP,
+            packet[2] & BAYANG_FLAG_HEADLESS == BAYANG_FLAG_HEADLESS,
+            packet[2] & BAYANG_FLAG_RTH == BAYANG_FLAG_RTH,
+            packet[2] & BAYANG_FLAG_SNAPSHOT == BAYANG_FLAG_SNAPSHOT,
+            packet[2] & BAYANG_FLAG_VIDEO == BAYANG_FLAG_VIDEO,
+            packet[3] & BAYANG_FLAG_INVERT == BAYANG_FLAG_INVERT
+        );
+        Serial.write(sumd, 37);
+        // Serial.write("Hello");
         delay(7);
         digitalWrite(ledPin, LOW);
       }
