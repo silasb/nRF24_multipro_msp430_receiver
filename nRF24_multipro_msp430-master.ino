@@ -42,7 +42,6 @@
 
 
 // ############ Wiring ################
-#define PPM_pin   P1_5  // PPM in
 //SPI Comm.pins with nRF24L01
 #define MOSI_pin  P2_0  // MOSI
 #define SCK_pin   P2_1  // SCK
@@ -50,7 +49,6 @@
 #define MISO_pin  P2_2 // MISO
 #define CS_pin    P2_4 // CS
 #define ledPin    P1_0 // LED
-
 
 // SPI outputs
 #define MOSI_on P2OUT |= _BV(0)// P2_0
@@ -132,18 +130,18 @@ void setup()
     randomSeed((analogRead(A0) & 0x1F) | (analogRead(A1) << 5));
     pinMode(ledPin, OUTPUT);
     digitalWrite(ledPin, LOW); //start LED off
-//    pinMode(PPM_pin, INPUT);
     pinMode(MOSI_pin, OUTPUT);
     pinMode(SCK_pin, OUTPUT);
     pinMode(CS_pin, OUTPUT);
     pinMode(CE_pin, OUTPUT);
     pinMode(MISO_pin, INPUT);
 
+    // sumd speed
     Serial.begin(115200);
 
      // PPM ISR setup
 //    attachInterrupt(PPM_pin - 2, ISR_ppm, CHANGE);
-///*+*/ attachInterrupt(PPM_pin, ISR_ppm, CHANGE);
+// /*+*/ attachInterrupt(PPM_pin, ISR_ppm, CHANGE);
 //    TCCR1A = 0;  //reset timer1
 //    TCCR1B = 0;
 //    TCCR1B |= (1 << CS11);  //set timer1 to increment every 1 us @ 8MHz, 0.5 us @16MHz
@@ -164,28 +162,8 @@ void loop()
     }
     // process protocol
     switch(current_protocol) {
-        case PROTO_CG023:
-        case PROTO_YD829:
-            timeout = process_CG023();
-            break;
-        case PROTO_V2X2:
-            timeout = process_V2x2();
-            break;
-        case PROTO_CX10_GREEN:
-        case PROTO_CX10_BLUE:
-            timeout = process_CX10();
-            break;
-        case PROTO_H7:
-            timeout = process_H7();
-            break;
         case PROTO_BAYANG:
             timeout = process_Bayang();
-            break;
-        case PROTO_H8_3D:
-            timeout = process_H8_3D();
-            break;
-        case PROTO_HISKY:
-            timeout = process_HiSky();
             break;
     }
     // updates ppm values out of ISR
@@ -245,53 +223,9 @@ void selectProtocol()
 
     // protocol selection
 
-    // Rudder right + Elevator down
-    else if(ppm[RUDDER] > PPM_MAX_COMMAND && ppm[ELEVATOR] < PPM_MIN_COMMAND)
-    current_protocol = PROTO_HISKY; // HiSky RXs, HFP80, HCP80/100, FBL70/80/90/100, FF120, HMX120, WLToys v933/944/955 ...
-
-    // Rudder right + Elevator up
-    else if(ppm[RUDDER] > PPM_MAX_COMMAND && ppm[ELEVATOR] > PPM_MAX_COMMAND)
-        current_protocol = PROTO_SYMAXOLD; // Syma X5C, X2 ...
-
-    // Rudder right + Aileron right
-    else if(ppm[RUDDER] > PPM_MAX_COMMAND && ppm[AILERON] > PPM_MAX_COMMAND)
-        current_protocol = PROTO_MJX; // MJX X600, other sub protocols can be set in code
-
-    // Rudder right + Aileron left
-    else if(ppm[RUDDER] > PPM_MAX_COMMAND && ppm[AILERON] < PPM_MIN_COMMAND)
-        current_protocol = PROTO_H8_3D; // H8 mini 3D, H20 ...
-
-    // Elevator down + Aileron right
-    else if(ppm[ELEVATOR] < PPM_MIN_COMMAND && ppm[AILERON] > PPM_MAX_COMMAND)
-        current_protocol = PROTO_YD829; // YD-829, YD-829C, YD-822 ...
-
-    // Elevator down + Aileron left
-    else if(ppm[ELEVATOR] < PPM_MIN_COMMAND && ppm[AILERON] < PPM_MIN_COMMAND)
-        current_protocol = PROTO_SYMAX5C1; // Syma X5C-1, X11, X11C, X12
-
     // Elevator up + Aileron right
     else if(ppm[ELEVATOR] > PPM_MAX_COMMAND && ppm[AILERON] > PPM_MAX_COMMAND)
         current_protocol = PROTO_BAYANG;    // EAchine H8(C) mini, BayangToys X6/X7/X9, JJRC JJ850 ...
-
-    // Elevator up + Aileron left
-    else if(ppm[ELEVATOR] > PPM_MAX_COMMAND && ppm[AILERON] < PPM_MIN_COMMAND)
-        current_protocol = PROTO_H7;        // EAchine H7, MT99xx
-
-    // Elevator up
-    else if(ppm[ELEVATOR] > PPM_MAX_COMMAND)
-        current_protocol = PROTO_V2X2;       // WLToys V202/252/272, JXD 385/388, JJRC H6C ...
-
-    // Elevator down
-    else if(ppm[ELEVATOR] < PPM_MIN_COMMAND)
-        current_protocol = PROTO_CG023;      // EAchine CG023/CG031/3D X4, (todo :ATTOP YD-836/YD-836C) ...
-
-    // Aileron right
-    else if(ppm[AILERON] > PPM_MAX_COMMAND)
-        current_protocol = PROTO_CX10_BLUE;  // Cheerson CX10(blue pcb, newer red pcb)/CX10-A/CX11/CX12 ...
-
-    // Aileron left
-    else if(ppm[AILERON] < PPM_MIN_COMMAND)
-        current_protocol = PROTO_CX10_GREEN;  // Cheerson CX10(green pcb)...
 
     // read last used protocol from eeprom
 //    else
@@ -309,31 +243,9 @@ void selectProtocol()
 void init_protocol()
 {
     switch(current_protocol) {
-        case PROTO_CG023:
-        case PROTO_YD829:
-            CG023_init();
-            CG023_bind();
-            break;
-        case PROTO_V2X2:
-            V2x2_init();
-            V2x2_bind();
-            break;
-        case PROTO_CX10_GREEN:
-        case PROTO_CX10_BLUE:
-            CX10_init();
-            CX10_bind();
-            break;
-        case PROTO_H7:
-            H7_init();
-            H7_bind();
-            break;
         case PROTO_BAYANG:
             Bayang_init();
             Bayang_bind();
-            break;
-        case PROTO_H8_3D:
-            H8_3D_init();
-            H8_3D_bind();
             break;
     }
 }
@@ -349,37 +261,3 @@ void update_ppm()
 /*+*/         __enable_interrupt();
     }
 }
-
-void ISR_ppm()
-{
-    #if F_CPU == 16000000
-        #define PPM_SCALE 1L
-    #elif F_CPU == 8000000
-        #define PPM_SCALE 0L
-    #else
-        #error // 8 or 16MHz only !
-    #endif
-    static unsigned int pulse;
-    static unsigned long counterPPM;
-    static byte chan;
-//    counterPPM = TCNT1;
-//    TCNT1 = 0;
-/*+*/  counterPPM = TAR;
-/*+*/  TAR = 0;
-    ppm_ok=false;
-    if(counterPPM < 510 << PPM_SCALE) {  //must be a pulse if less than 510us
-        pulse = counterPPM;
-    }
-    else if(counterPPM > 1910 << PPM_SCALE) {  //sync pulses over 1910us
-        chan = 0;
-    }
-    else{  //servo values between 510us and 2420us will end up here
-        if(chan < CHANNELS) {
-            Servo_data[chan]= constrain((counterPPM + pulse) >> PPM_SCALE, PPM_MIN, PPM_MAX);
-            if(chan==3)
-                ppm_ok = true; // 4 first channels Ok
-        }
-        chan++;
-    }
-}
-
