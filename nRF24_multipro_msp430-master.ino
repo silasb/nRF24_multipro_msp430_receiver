@@ -128,8 +128,10 @@ static uint16_t ppm[12] = {PPM_MIN,PPM_MIN,PPM_MIN,PPM_MIN,PPM_MID,PPM_MID,
 void setup()
 {
     randomSeed((analogRead(A0) & 0x1F) | (analogRead(A1) << 5));
+
     pinMode(ledPin, OUTPUT);
     digitalWrite(ledPin, LOW); //start LED off
+
     pinMode(MOSI_pin, OUTPUT);
     pinMode(SCK_pin, OUTPUT);
     pinMode(CS_pin, OUTPUT);
