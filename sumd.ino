@@ -5,7 +5,11 @@
 #define SUMD_MAXCHAN 16
 #define SUMD_BUFFSIZE SUMD_MAXCHAN * 2 + 5 // 8 channels + 5 -> 21 bytes for 8 channels
 
-#define CHANNELS 4
+#define SUMD_EX_LOW  0x1c20 // eq 900us pulse length
+#define SUMD_LOW     0x2260 // eq 1100us pulse length
+#define SUMD_NEUTRAL 0x2ee0 // eq 1500us pusle length
+#define SUMD_HIGH    0x3b60 // eq 1900us pulse length
+#define SUMD_EX_HIGH 0x41a0 // eq 2100us pulse length
 
 static uint8_t sumd[SUMD_BUFFSIZE]={0};
 static uint16_t crc = 0;
@@ -24,77 +28,85 @@ uint16_t CRC16(uint16_t crc, uint8_t value) {
   return crc;
 }
 
-uint8_t* BuildSumD(uint16_t roll, uint16_t pitch, uint16_t yaw, uint16_t throttle,
-uint8_t aux1, uint8_t aux2, uint8_t aux3, uint8_t aux4, uint8_t aux5, uint8_t aux6) {
-  // static uint8_t sumdIndex = 0;
+uint8_t* BuildSumD(
+  uint16_t roll,
+  uint16_t pitch,
+  uint16_t yaw,
+  uint16_t throttle,
+  uint8_t aux1,
+  uint8_t aux2,
+  uint8_t aux3,
+  uint8_t aux4,
+  uint8_t aux5,
+  uint8_t aux6
+) {
   // header
   sumd[0] = SUMD_SYNCBYTE;
   sumd[1] = SUMD_STATUS;
   sumd[2] = SUMD_MAXCHAN;
 
   int i = 1;
-  uint16_t throttleValue = map(throttle, 0, 1023, 0x2260, 0x3b60);
+  uint16_t throttleValue = map(throttle, 0, 1023, SUMD_LOW, SUMD_HIGH);
   sumd[i*2+1] = throttleValue >> 8;
   sumd[i*2+2] = throttleValue & 0xff;
 
   i++; // 2
-
-  uint16_t rollValue = map(roll, 0, 1023, 0x2260, 0x3b60);
+  uint16_t rollValue = map(roll, 0, 1023, SUMD_LOW, SUMD_HIGH);
   sumd[i*2+1] = rollValue >> 8;
   sumd[i*2+2] = rollValue & 0xff;
 
   i++; // 3
-
-  uint16_t pitchValue = map(pitch, 0, 1023, 0x2260, 0x3b60);
+  uint16_t pitchValue = map(pitch, 0, 1023, SUMD_LOW, SUMD_HIGH);
   sumd[i*2+1] = pitchValue >> 8;
   sumd[i*2+2] = pitchValue & 0xff;
 
   i++; // 4
-
-  uint16_t yawValue = map(yaw, 0, 1023, 0x2260, 0x3b60);
+  uint16_t yawValue = map(yaw, 0, 1023, SUMD_LOW, SUMD_HIGH);
   sumd[i*2+1] = yawValue >> 8;
   sumd[i*2+2] = yawValue & 0xff;
 
   i++; // 5
-
-  // uint16_t aux1Value = map(aux1, 0x00, 0xff, 0x2260, 0x3b60);
-  uint16_t aux1Value = 0x2260;
-  if (aux1) aux1Value = 0x3b60;
+  uint16_t aux1Value = SUMD_LOW;
+  if (aux1) aux1Value = SUMD_HIGH;
   sumd[i*2+1] = aux1Value >> 8;
   sumd[i*2+2] = aux1Value & 0xff;
 
-  i++;
-  uint16_t aux2Value = 0x2260;
-  if (aux2) aux2Value = 0x3b60;
+  i++; // 6
+  uint16_t aux2Value = SUMD_LOW;
+  if (aux2) aux2Value = SUMD_HIGH;
   sumd[i*2+1] = aux2Value >> 8;
   sumd[i*2+2] = aux2Value & 0xff;
-  i++;
-  uint16_t aux3Value = 0x2260;
-  if (aux3) aux3Value = 0x3b60;
+
+  i++; // 7
+  uint16_t aux3Value = SUMD_LOW;
+  if (aux3) aux3Value = SUMD_HIGH;
   sumd[i*2+1] = aux3Value >> 8;
   sumd[i*2+2] = aux3Value & 0xff;
-  i++;
-  uint16_t aux4Value = 0x2260;
-  if (aux4) aux4Value = 0x3b60;
+
+  i++; // 8
+  uint16_t aux4Value = SUMD_LOW;
+  if (aux4) aux4Value = SUMD_HIGH;
   sumd[i*2+1] = aux4Value >> 8;
   sumd[i*2+2] = aux4Value & 0xff;
-  i++;
-  uint16_t aux5Value = 0x2260;
-  if (aux5) aux5Value = 0x3b60;
+
+  i++; // 9
+  uint16_t aux5Value = SUMD_LOW;
+  if (aux5) aux5Value = SUMD_HIGH;
   sumd[i*2+1] = aux5Value >> 8;
   sumd[i*2+2] = aux5Value & 0xff;
-  i++;
-  uint16_t aux6Value = 0x2260;
-  if (aux6) aux6Value = 0x3b60;
+
+  i++; // 10
+  uint16_t aux6Value = SUMD_LOW;
+  if (aux6) aux6Value = SUMD_HIGH;
   sumd[i*2+1] = aux6Value >> 8;
   sumd[i*2+2] = aux6Value & 0xff;
 
-  i++;
+  i++; // 11
 
-  // data
+  // extra channels get set with neutral
   for (; i <= SUMD_MAXCHAN; i++) {
-    sumd[i*2+1] = 0x2e;
-    sumd[i*2+2] = 0xe0;
+    sumd[i*2+1] = SUMD_LOW >> 8;
+    sumd[i*2+2] = SUMD_LOW & 0xff;
   }
 
   // CRC
@@ -110,4 +122,3 @@ uint8_t aux1, uint8_t aux2, uint8_t aux3, uint8_t aux4, uint8_t aux5, uint8_t au
 
   return sumd;
 }
-

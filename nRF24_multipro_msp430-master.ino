@@ -39,7 +39,7 @@
 #define _BV(val) 1<<val
 /*+*/
 #include "iface_nrf24l01.h"
-
+#include "sumd.h"
 
 // ############ Wiring ################
 //SPI Comm.pins with nRF24L01
@@ -139,7 +139,7 @@ void setup()
     pinMode(MISO_pin, INPUT);
 
     // sumd speed
-    Serial.begin(115200);
+    Serial.begin(SUMD_SPEED);
 
      // PPM ISR setup
 //    attachInterrupt(PPM_pin - 2, ISR_ppm, CHANGE);
